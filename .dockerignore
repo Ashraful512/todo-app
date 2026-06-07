@@ -1,0 +1,12 @@
+# .dockerignore
+# Like .gitignore — tells Docker what NOT to copy into the image.
+# Keeping the image lean and clean.
+
+.venv
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.git
+.gitignore
+*.md

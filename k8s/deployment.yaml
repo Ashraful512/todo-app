@@ -1,0 +1,68 @@
+# k8s/deployment.yaml
+# This file describes the DESIRED STATE of our app in Kubernetes.
+# Kubernetes will constantly work to make reality match what's written here.
+
+# ── Part 1: Deployment ────────────────────────────────────────────────────────
+# A Deployment manages Pods. It ensures the right number are always running.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-deployment
+  labels:
+    app: todo-app
+spec:
+  replicas: 3                      # "I want 3 copies of this Pod running always"
+  selector:
+    matchLabels:
+      app: todo-app                # manages Pods with this label
+  template:
+    metadata:
+      labels:
+        app: todo-app
+    spec:
+      containers:
+      - name: todo-app
+        image: ziyun668/todo-app:v1   # ← your Docker Hub image
+        ports:
+        - containerPort: 5000
+
+        # Health checks — Kubernetes uses these to know if a Pod is alive
+        livenessProbe:             # "is the app still running?"
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+        readinessProbe:            # "is the app ready to receive traffic?"
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 3
+          periodSeconds: 5
+
+        # Resource limits — prevents one Pod from eating all the machine's memory
+        resources:
+          requests:
+            memory: "64Mi"         # minimum guaranteed
+            cpu: "100m"            # 100 millicores = 0.1 CPU
+          limits:
+            memory: "128Mi"        # hard cap
+            cpu: "200m"
+
+---
+# ── Part 2: Service ───────────────────────────────────────────────────────────
+# A Service gives your 3 Pods a single stable address and load-balances traffic.
+# Without this, each Pod has a random IP that changes when it restarts.
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-service
+spec:
+  selector:
+    app: todo-app                  # routes to all Pods with this label
+  ports:
+  - protocol: TCP
+    port: 80                       # external port (what you access)
+    targetPort: 5000               # internal port (what Flask listens on)
+  type: NodePort                   # exposes it on minikube's IP
