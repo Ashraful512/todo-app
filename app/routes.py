@@ -50,5 +50,8 @@ def delete_todo(todo_id):
 
 @bp.route("/health", methods=["GET"])
 def health():
-    """GET /health — used by Kubernetes to check if the app is alive."""
-    return jsonify({"status": "ok"}), 200
+    return jsonify({
+        "status": "ok",
+        "version": "v3",
+        "message": "CI/CD pipeline working! 🚀"
+    }), 200
